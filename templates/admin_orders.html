@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}Customer & Order Details{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>🛡 Customer & Order Details</h1>
+    </div>
+</div>
+
+{% if stats %}
+<div class="stats-bar">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-val">{{ stats.total_orders or 0 }}</span>
+                <span class="stat-label">Total Orders</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">₹{{ "%.0f"|format(stats.total_revenue or 0) }}</span>
+                <span class="stat-label">Total Revenue</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">₹{{ "%.0f"|format(stats.avg_order_value or 0) }}</span>
+                <span class="stat-label">Avg Order Value</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">₹{{ "%.0f"|format(stats.max_order or 0) }}</span>
+                <span class="stat-label">Max Order</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">₹{{ "%.0f"|format(stats.min_order or 0) }}</span>
+                <span class="stat-label">Min Order</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="container">
+    <!-- FILTERS -->
+    <form method="GET" action="{{ url_for('admin_orders') }}" class="filter-form admin-filters">
+        <div class="filter-row flex-wrap">
+            <select name="status" class="filter-select">
+                <option value="">All Statuses</option>
+                {% for s in ['Pending','Processing','Shipped','Completed','Cancelled'] %}
+                <option value="{{ s }}" {% if request.args.get('status') == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <select name="city" class="filter-select">
+                <option value="">All Cities</option>
+                {% for c in cities %}
+                <option value="{{ c }}" {% if request.args.get('city') == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+            <select name="state" class="filter-select">
+                <option value="">All States</option>
+                {% for st in states %}
+                <option value="{{ st }}" {% if request.args.get('state') == st %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="order_date" value="{{ request.args.get('order_date','') }}" class="filter-input">
+            <div class="search-id-group">
+                <input type="text" name="search_id" value="{{ request.args.get('search_id','') }}" placeholder="ID..." class="filter-input" style="width:100px">
+                <select name="search_type" class="filter-select" style="width:120px">
+                    <option value="order">Order ID</option>
+                    <option value="customer" {% if request.args.get('search_type') == 'customer' %}selected{% endif %}>Customer ID</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ url_for('admin_orders') }}" class="btn btn-outline">Clear</a>
+        </div>
+    </form>
+
+    <!-- ORDERS TABLE -->
+    <div class="section-heading">
+        <h2>Orders <span class="count-badge">{{ orders|length }}</span></h2>
+    </div>
+
+    {% if orders %}
+    <div class="orders-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Cust ID</th>
+                    <th>Phone</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Books</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td><strong>#{{ o.O_ID }}</strong></td>
+                    <td>{{ o.ORDER_DATE }}</td>
+                    <td>{{ o.CUSTOMER_NAME or 'N/A' }}</td>
+                    <td>{{ o.CUST_ID or 'N/A' }}</td>
+                    <td>{{ o.CUSTOMER_PHONE or 'N/A' }}</td>
+                    <td>{{ o.CITY or 'N/A' }}</td>
+                    <td>{{ o.STATE or 'N/A' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="toggleItems('items-{{ o.O_ID }}')">
+                            {{ o.NOS_OF_BOOKS_ORDERED }} books 👁
+                        </button>
+                    </td>
+                    <td><strong>₹{{ "%.2f"|format(o.TOTAL_AMOUNT or 0) }}</strong></td>
+                    <td>
+                        <span class="method-tag">{{ o.PAYMENT_METHOD or 'N/A' }}</span><br>
+                        <small class="txn-id">{{ o.TRANSACTION_ID or '' }}</small>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ o.ORDER_STATUS|lower }}">{{ o.ORDER_STATUS }}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline" onclick="toggleUpdateForm('update-{{ o.O_ID }}')">✏ Update</button>
+                    </td>
+                </tr>
+                <!-- Items row -->
+                <tr id="items-{{ o.O_ID }}" class="items-row hidden">
+                    <td colspan="12">
+                        <div class="items-list">
+                            <strong>Books in Order #{{ o.O_ID }}:</strong>
+                            {% if order_items_map[o.O_ID] %}
+                            <table class="inner-table">
+                                <tr><th>ISBN</th><th>Title</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr>
+                                {% for item in order_items_map[o.O_ID] %}
+                                <tr>
+                                    <td>{{ item.ISBN }}</td>
+                                    <td>{{ item.BOOK_TITLE }}</td>
+                                    <td>{{ item.QUANTITY }}</td>
+                                    <td>₹{{ "%.2f"|format(item.UNIT_PRICE) }}</td>
+                                    <td>₹{{ "%.2f"|format(item.UNIT_PRICE * item.QUANTITY) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                            {% else %}
+                            <p>No items found.</p>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                <!-- Update form row -->
+                <tr id="update-{{ o.O_ID }}" class="items-row hidden">
+                    <td colspan="12">
+                        <form method="POST" action="{{ url_for('update_order_status') }}" class="inline-form">
+                            <input type="hidden" name="order_id" value="{{ o.O_ID }}">
+                            <label>Change Status:</label>
+                            <select name="status">
+                                {% for s in ['Pending','Processing','Shipped','Completed','Cancelled'] %}
+                                <option value="{{ s }}" {% if o.ORDER_STATUS == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><span>📋</span><p>No orders found.</p></div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleItems(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('hidden');
+}
+function toggleUpdateForm(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('hidden');
+}
+</script>
+{% endblock %}

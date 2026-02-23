@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Authors{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>✍️ Authors</h1>
+        {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('add_author') }}" class="btn btn-primary">+ Add Author</a>
+        {% endif %}
+    </div>
+</div>
+<div class="container">
+    <form method="GET" action="{{ url_for('authors') }}" class="filter-form">
+        <div class="filter-row">
+            <input type="text" name="search" value="{{ search }}" placeholder="🔍 Search author name..." class="filter-input filter-search">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ url_for('authors') }}" class="btn btn-outline">Clear</a>
+        </div>
+    </form>
+
+    {% if not_found_msg %}
+    <div class="not-found-banner">
+        <span>⚠️ {{ not_found_msg }}</span>
+        <small>Author "{{ search }}" was not found in our database.</small>
+    </div>
+    {% endif %}
+
+    {% if authors %}
+    <div class="authors-grid">
+        {% for author in authors %}
+        <div class="author-card">
+            <div class="author-avatar">{{ author.NAME[0] }}</div>
+            <div class="author-info">
+                <h3>{{ author.NAME }}</h3>
+                <p class="author-contact">📧 {{ author.EMAIL or 'N/A' }}</p>
+                <p class="author-contact">📞 {{ author.PHONE or 'N/A' }}</p>
+                <div class="author-stat">
+                    <span class="stat-badge">{{ author.BOOKS_WRITTEN }} book(s) written</span>
+                </div>
+            </div>
+            {% if author_books[author.A_ID] %}
+            <div class="author-books">
+                <h4>Books:</h4>
+                <ul>
+                    {% for book in author_books[author.A_ID] %}
+                    <li>
+                        <span class="ab-title">{{ book.TITLE }}</span>
+                        <span class="ab-price">₹{{ "%.0f"|format(book.PRICE) }}</span>
+                        <span class="ab-lang">{{ book.LANGUAGE }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    {% if not not_found_msg %}
+    <div class="empty-state"><span>👤</span><p>No authors found.</p></div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

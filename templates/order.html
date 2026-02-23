@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% block title %}Order Books{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>🛒 Order Books</h1>
+    </div>
+</div>
+<div class="container form-page">
+    <form method="POST" action="{{ url_for('order_books') }}" class="styled-form" id="orderForm">
+
+        <div class="form-section">
+            <h3>Select Books</h3>
+            <div id="bookRows">
+                <div class="book-order-row">
+                    <div class="form-group" style="flex:2">
+                        <label>Book Title</label>
+                        <select name="isbn[]" class="book-select" onchange="updatePrice(this)">
+                            <option value="">-- Select a Book --</option>
+                            {% for book in books %}
+                            <option value="{{ book.ISBN }}" data-price="{{ book.PRICE }}" data-avail="{{ book.QUANTITY_AVAILABLE }}">
+                                {{ book.TITLE }} — ₹{{ "%.0f"|format(book.PRICE) }} ({{ book.QUANTITY_AVAILABLE }} avail.)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" name="quantity[]" class="qty-input" min="1" value="1" onchange="calcTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Price</label>
+                        <input type="text" class="price-display" readonly placeholder="₹0.00">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-row" onclick="removeRow(this)" style="margin-top:28px">✕</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="addBookRow()">+ Add Another Book</button>
+        </div>
+
+        <div class="order-total-box">
+            <div class="total-line">
+                <span>Total Books Ordered:</span>
+                <span id="totalBooks">0</span>
+            </div>
+            <div class="total-line total-amount-line">
+                <span>Total Amount:</span>
+                <span id="totalAmount">₹0.00</span>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Personal Details</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" value="{{ customer.FIRST_NAME }}" readonly class="readonly-input">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" value="{{ customer.LAST_NAME }}" readonly class="readonly-input">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" value="{{ customer.PHONE_NUMBER }}" readonly class="readonly-input">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" value="{{ customer.EMAIL }}" readonly class="readonly-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Shipping Address</h3>
+            <div class="address-prefill">
+                <label>
+                    <input type="checkbox" id="sameAddress" onchange="prefillAddress()"> Use my registered address
+                </label>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>House Number</label>
+                    <input type="text" name="house_number" id="sh_house" placeholder="House/Flat No." required>
+                </div>
+                <div class="form-group">
+                    <label>Street</label>
+                    <input type="text" name="street" id="sh_street" placeholder="Street name" required>
+                </div>
+            </div>
+            <div class="form-row form-row-3">
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" name="city" id="sh_city" placeholder="City" required>
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input type="text" name="state" id="sh_state" placeholder="State" required>
+                </div>
+                <div class="form-group">
+                    <label>Pincode</label>
+                    <input type="text" name="pincode" id="sh_pincode" placeholder="Pincode" pattern="[0-9]{6}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Payment Method</h3>
+            <div class="payment-methods">
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="UPI" required>
+                    <span class="payment-label">💳 UPI</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="Credit Card">
+                    <span class="payment-label">💳 Credit Card</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="Debit Card">
+                    <span class="payment-label">💳 Debit Card</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="Net Banking">
+                    <span class="payment-label">🏦 Net Banking</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="Cash on Delivery">
+                    <span class="payment-label">💵 Cash on Delivery</span>
+                </label>
+            </div>
+            <p class="payment-date-note">📅 Payment Date: <strong id="payDate"></strong></p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg" onclick="return validateOrder()">Place Order 🚀</button>
+            <a href="{{ url_for('books') }}" class="btn btn-outline btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Set today's date
+document.getElementById('payDate').textContent = new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'long',year:'numeric'});
+
+const customerAddr = {
+    house: "{{ customer.HOUSE_NUMBER or '' }}",
+    street: "{{ customer.STREET or '' }}",
+    city: "{{ customer.CITY or '' }}",
+    state: "{{ customer.STATE or '' }}",
+    pincode: "{{ customer.PINCODE or '' }}"
+};
+
+function prefillAddress() {
+    const same = document.getElementById('sameAddress').checked;
+    document.getElementById('sh_house').value = same ? customerAddr.house : '';
+    document.getElementById('sh_street').value = same ? customerAddr.street : '';
+    document.getElementById('sh_city').value = same ? customerAddr.city : '';
+    document.getElementById('sh_state').value = same ? customerAddr.state : '';
+    document.getElementById('sh_pincode').value = same ? customerAddr.pincode : '';
+}
+
+function updatePrice(select) {
+    const row = select.closest('.book-order-row');
+    const opt = select.options[select.selectedIndex];
+    const price = parseFloat(opt.dataset.price) || 0;
+    row.querySelector('.price-display').value = price > 0 ? '₹' + price.toFixed(2) : '';
+    calcTotal();
+}
+
+function calcTotal() {
+    let total = 0, totalBooks = 0;
+    document.querySelectorAll('.book-order-row').forEach(row => {
+        const sel = row.querySelector('.book-select');
+        const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+        const opt = sel.options[sel.selectedIndex];
+        const price = parseFloat(opt?.dataset?.price) || 0;
+        if (price > 0 && qty > 0) {
+            total += price * qty;
+            totalBooks += qty;
+        }
+    });
+    document.getElementById('totalAmount').textContent = '₹' + total.toFixed(2);
+    document.getElementById('totalBooks').textContent = totalBooks;
+}
+
+function addBookRow() {
+    const template = document.querySelector('.book-order-row').cloneNode(true);
+    template.querySelector('.book-select').value = '';
+    template.querySelector('.qty-input').value = 1;
+    template.querySelector('.price-display').value = '';
+    template.querySelector('.book-select').addEventListener('change', function(){ updatePrice(this); });
+    template.querySelector('.qty-input').addEventListener('change', calcTotal);
+    document.getElementById('bookRows').appendChild(template);
+}
+
+function removeRow(btn) {
+    const rows = document.querySelectorAll('.book-order-row');
+    if (rows.length > 1) {
+        btn.closest('.book-order-row').remove();
+        calcTotal();
+    }
+}
+
+function validateOrder() {
+    const selects = document.querySelectorAll('.book-select');
+    let hasBook = false;
+    selects.forEach(s => { if(s.value) hasBook = true; });
+    if (!hasBook) { alert('Please select at least one book.'); return false; }
+    return true;
+}
+
+document.querySelectorAll('.book-select').forEach(s => s.addEventListener('change', function(){ updatePrice(this); }));
+document.querySelectorAll('.qty-input').forEach(i => i.addEventListener('change', calcTotal));
+</script>
+{% endblock %}

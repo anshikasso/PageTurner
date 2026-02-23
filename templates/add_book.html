@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Add Book{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>➕ Add New Book</h1>
+        <a href="{{ url_for('books') }}" class="btn btn-outline">← Back to Books</a>
+    </div>
+</div>
+<div class="container form-page">
+    <form method="POST" enctype="multipart/form-data" class="styled-form">
+        <div class="form-section">
+            <h3>Book Details</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>ISBN *</label>
+                    <input type="text" name="isbn" placeholder="e.g. 978-XXXXXXXXX" required>
+                </div>
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" name="title" placeholder="Book title" required>
+                </div>
+            </div>
+            <div class="form-row form-row-3">
+                <div class="form-group">
+                    <label>Edition</label>
+                    <input type="text" name="edition" placeholder="e.g. 1st">
+                </div>
+                <div class="form-group">
+                    <label>Price (₹) *</label>
+                    <input type="number" name="price" placeholder="0.00" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Publication Year</label>
+                    <input type="number" name="pub_year" placeholder="e.g. 2023" min="1800" max="2099">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Language</label>
+                    <input type="text" name="language" placeholder="e.g. English">
+                </div>
+                <div class="form-group">
+                    <label>Quantity Available</label>
+                    <input type="number" name="quantity" placeholder="0" min="0" value="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Author & Publisher</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Author</label>
+                    <select name="author_id">
+                        <option value="">-- Select Author --</option>
+                        {% for a in authors %}
+                        <option value="{{ a.A_ID }}">{{ a.NAME }}</option>
+                        {% endfor %}
+                    </select>
+                    <small><a href="{{ url_for('add_author') }}" target="_blank">+ Add new author</a></small>
+                </div>
+                <div class="form-group">
+                    <label>Publisher</label>
+                    <select name="publisher_id">
+                        <option value="">-- Select Publisher --</option>
+                        {% for p in publishers %}
+                        <option value="{{ p.P_ID }}">{{ p.NAME }}</option>
+                        {% endfor %}
+                    </select>
+                    <small><a href="{{ url_for('add_publisher') }}" target="_blank">+ Add new publisher</a></small>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Book Cover Image</h3>
+            <div class="form-group">
+                <label>Upload Cover Image</label>
+                <input type="file" name="image" accept="image/*" id="imageInput">
+                <div class="image-preview-box" id="imagePreview">
+                    <span>No image selected</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">Add Book</button>
+            <a href="{{ url_for('books') }}" class="btn btn-outline btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('imagePreview').innerHTML = `<img src="${ev.target.result}" style="max-height:200px;border-radius:8px;">`;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

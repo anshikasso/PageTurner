@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Publishers{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>🏢 Publishers</h1>
+        {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('add_publisher') }}" class="btn btn-primary">+ Add Publisher</a>
+        {% endif %}
+    </div>
+</div>
+<div class="container">
+    <form method="GET" action="{{ url_for('publishers') }}" class="filter-form">
+        <div class="filter-row">
+            <input type="text" name="search" value="{{ search }}" placeholder="🔍 Search publisher..." class="filter-input filter-search">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{{ url_for('publishers') }}" class="btn btn-outline">Clear</a>
+        </div>
+    </form>
+
+    {% if not_found_msg %}
+    <div class="not-found-banner">
+        <span>⚠️ {{ not_found_msg }}</span>
+        <small>Publisher "{{ search }}" was not found in our database.</small>
+    </div>
+    {% endif %}
+
+    {% if publishers %}
+    <div class="publishers-grid">
+        {% for pub in publishers %}
+        <div class="publisher-card">
+            <div class="publisher-icon">🏢</div>
+            <div class="publisher-info">
+                <h3>{{ pub.NAME }}</h3>
+                <p class="pub-address">📍 {{ pub.ADDRESS or 'N/A' }}</p>
+                <p class="pub-contact">📧 {{ pub.EMAIL or 'N/A' }}</p>
+                <p class="pub-contact">📞 {{ pub.PHONE_NUMBER or 'N/A' }}</p>
+                <div class="author-stat">
+                    <span class="stat-badge">{{ pub.BOOKS_PUBLISHED }} book(s) published</span>
+                </div>
+            </div>
+            {% if pub_books[pub.P_ID] %}
+            <div class="author-books">
+                <h4>Published Books:</h4>
+                <ul>
+                    {% for book in pub_books[pub.P_ID] %}
+                    <li>
+                        <span class="ab-title">{{ book.TITLE }}</span>
+                        <span class="ab-price">₹{{ "%.0f"|format(book.PRICE) }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    {% if not not_found_msg %}
+    <div class="empty-state"><span>🏢</span><p>No publishers found.</p></div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

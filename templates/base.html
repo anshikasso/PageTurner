@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BookStore{% endblock %} | PageTurner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="{{ url_for('index') }}" class="logo">
+                <span class="logo-icon">📚</span>
+                <span class="logo-text">PageTurner</span>
+            </a>
+            <nav class="nav">
+                <a href="{{ url_for('books') }}" class="nav-link {% if request.endpoint == 'books' %}active{% endif %}">Books</a>
+                <a href="{{ url_for('authors') }}" class="nav-link {% if request.endpoint == 'authors' %}active{% endif %}">Authors</a>
+                <a href="{{ url_for('publishers') }}" class="nav-link {% if request.endpoint == 'publishers' %}active{% endif %}">Publishers</a>
+
+                {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('admin_orders') }}" class="nav-link nav-admin {% if request.endpoint == 'admin_orders' %}active{% endif %}">
+                    🛡 Customer & Orders
+                </a>
+                {% endif %}
+
+                {% if session.get('role') == 'customer' %}
+                <a href="{{ url_for('order_books') }}" class="nav-link nav-customer {% if request.endpoint == 'order_books' %}active{% endif %}">
+                    🛒 Order Books
+                </a>
+                {% endif %}
+            </nav>
+            <div class="header-actions">
+                {% if session.get('user') %}
+                <span class="welcome-msg">
+                    {% if session.get('role') == 'admin' %}🛡{% else %}👤{% endif %}
+                    {{ session.get('name', session.get('user')) }}
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Logout</a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">Login</a>
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-sm">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for cat, msg in messages %}
+                <div class="flash flash-{{ cat }}">
+                    {{ msg }}
+                    <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <p>© 2024 PageTurner Bookstore | Built with Flask & MySQL</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

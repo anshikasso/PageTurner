@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Add Publisher{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>➕ Add New Publisher</h1>
+        <a href="{{ url_for('publishers') }}" class="btn btn-outline">← Back</a>
+    </div>
+</div>
+<div class="container form-page">
+    <form method="POST" class="styled-form">
+        <div class="form-section">
+            <h3>Publisher Details</h3>
+            <div class="form-group">
+                <label>Publisher Name *</label>
+                <input type="text" name="name" placeholder="Publisher name" required>
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" name="address" placeholder="Full address">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="publisher@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" name="phone" placeholder="Phone number">
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">Add Publisher</button>
+            <a href="{{ url_for('publishers') }}" class="btn btn-outline btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">Your Next Great Read<br><span class="hero-accent">Awaits You</span></h1>
+        <p class="hero-subtitle">Explore thousands of books from the world's best authors and publishers.</p>
+        <div class="hero-btns">
+            <a href="{{ url_for('books') }}" class="btn btn-primary btn-lg">Browse Books</a>
+            {% if not session.get('user') %}
+            <a href="{{ url_for('register') }}" class="btn btn-outline btn-lg">Join Now</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="hero-image">
+        <div class="book-stack">
+            <div class="book-card-hero b1">📖</div>
+            <div class="book-card-hero b2">📗</div>
+            <div class="book-card-hero b3">📕</div>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="container">
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">📚</span>
+                <h3>Vast Collection</h3>
+                <p>Thousands of books across all genres and languages.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">✍️</span>
+                <h3>Top Authors</h3>
+                <p>Works from celebrated authors around the world.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🚀</span>
+                <h3>Fast Delivery</h3>
+                <p>Quick and reliable shipping to your doorstep.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">💳</span>
+                <h3>Easy Payments</h3>
+                <p>Multiple secure payment options available.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if not session.get('user') %}
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-box">
+            <h2>Ready to Start Reading?</h2>
+            <p>Create an account to order books and track your orders.</p>
+            <div class="cta-btns">
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Register as Customer</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline">Admin Login</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

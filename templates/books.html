@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}Books{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>📚 Books Collection</h1>
+        {% if session.get('role') == 'admin' %}
+        <div class="admin-actions">
+            <a href="{{ url_for('add_book') }}" class="btn btn-primary">+ Add New Book</a>
+            <a href="{{ url_for('add_author') }}" class="btn btn-outline btn-sm">+ Add Author</a>
+            <a href="{{ url_for('add_publisher') }}" class="btn btn-outline btn-sm">+ Add Publisher</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if stats %}
+<div class="stats-bar">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-val">{{ stats.total or 0 }}</span>
+                <span class="stat-label">Total Titles</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">{{ stats.total_qty or 0 }}</span>
+                <span class="stat-label">Books in Stock</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">₹{{ "%.0f"|format(stats.avg_price or 0) }}</span>
+                <span class="stat-label">Avg Price</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">₹{{ "%.0f"|format(stats.max_price or 0) }}</span>
+                <span class="stat-label">Max Price</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">₹{{ "%.0f"|format(stats.min_price or 0) }}</span>
+                <span class="stat-label">Min Price</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="container">
+    <!-- FILTERS -->
+    <form method="GET" action="{{ url_for('books') }}" class="filter-form">
+        <div class="filter-row">
+            <input type="text" name="search" value="{{ search }}" placeholder="🔍 Search book title..." class="filter-input filter-search">
+            <select name="language" class="filter-select">
+                <option value="">All Languages</option>
+                {% for lang in languages %}
+                <option value="{{ lang }}" {% if language == lang %}selected{% endif %}>{{ lang }}</option>
+                {% endfor %}
+            </select>
+            <select name="author_filter" class="filter-select" onchange="this.form.elements['author'].value=this.value">
+                <option value="">Filter by Author</option>
+                {% for a in authors %}
+                <option value="{{ a }}">{{ a }}</option>
+                {% endfor %}
+            </select>
+            <input type="hidden" name="author" value="{{ request.args.get('author','') }}">
+            <select name="sort" class="filter-select">
+                <option value="">Sort: Default</option>
+                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price ↑ Low to High</option>
+                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price ↓ High to Low</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <a href="{{ url_for('books') }}" class="btn btn-outline">Clear</a>
+        </div>
+    </form>
+
+    {% if not_found_msg %}
+    <div class="not-found-banner">
+        <span>⚠️ {{ not_found_msg }}</span>
+        <small>The book "{{ search }}" is currently not available in our database.</small>
+    </div>
+    {% endif %}
+
+    <!-- TOP ORDERED SECTION -->
+    {% if top_books and not search %}
+    <div class="section-heading">
+        <h2>🔥 Most Ordered Books</h2>
+    </div>
+    <div class="top-books-strip">
+        {% for b in top_books %}
+        <div class="top-book-chip">
+            <span class="chip-title">{{ b.BOOK_TITLE }}</span>
+            <span class="chip-orders">{{ b.TOTAL_ORDERED }} ordered</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- BOOKS GRID -->
+    <div class="section-heading">
+        <h2>All Books
+            {% if search %}<small>Results for "{{ search }}"</small>{% endif %}
+        </h2>
+        <span class="count-badge">{{ books|length }} found</span>
+    </div>
+
+    {% if books %}
+    <div class="books-grid">
+        {% for book in books %}
+        <div class="book-card">
+            <div class="book-cover">
+                {% if book.IMAGE_PATH %}
+                <img src="{{ url_for('static', filename='images/' + book.IMAGE_PATH) }}" alt="{{ book.TITLE }}">
+                {% else %}
+                <div class="book-cover-placeholder">
+                    <span class="cover-emoji">📖</span>
+                </div>
+                {% endif %}
+                <div class="book-qty-badge {% if book.QUANTITY_AVAILABLE == 0 %}out-of-stock{% elif book.QUANTITY_AVAILABLE <= 5 %}low-stock{% endif %}">
+                    {% if book.QUANTITY_AVAILABLE == 0 %}Out of Stock
+                    {% elif book.QUANTITY_AVAILABLE <= 5 %}Only {{ book.QUANTITY_AVAILABLE }} left
+                    {% else %}{{ book.QUANTITY_AVAILABLE }} available{% endif %}
+                </div>
+            </div>
+            <div class="book-info">
+                <h3 class="book-title">{{ book.TITLE }}</h3>
+                <p class="book-author">✍ {{ book.AUTHOR_NAME or 'Unknown Author' }}</p>
+                <p class="book-publisher">🏢 {{ book.PUBLISHER_NAME or 'Unknown Publisher' }}</p>
+                <div class="book-meta">
+                    <span class="book-lang">🌐 {{ book.LANGUAGE }}</span>
+                    <span class="book-year">📅 {{ book.PUBLICATION_YEAR }}</span>
+                    <span class="book-edition">Ed. {{ book.EDITION }}</span>
+                </div>
+                <div class="book-footer">
+                    <span class="book-price">₹{{ "%.2f"|format(book.PRICE) }}</span>
+                    {% if session.get('role') == 'admin' %}
+                    <div class="book-admin-btns">
+                        <a href="{{ url_for('edit_book', isbn=book.ISBN) }}" class="btn btn-sm btn-outline">✏ Edit</a>
+                        <a href="{{ url_for('delete_book', isbn=book.ISBN) }}"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Delete this book?')">🗑 Delete</a>
+                    </div>
+                    {% elif session.get('role') == 'customer' %}
+                    {% if book.QUANTITY_AVAILABLE > 0 %}
+                    <a href="{{ url_for('order_books') }}" class="btn btn-sm btn-primary">Order</a>
+                    {% else %}
+                    <span class="btn btn-sm btn-disabled">Unavailable</span>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    {% if not not_found_msg %}
+    <div class="empty-state">
+        <span>📭</span>
+        <p>No books found.</p>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

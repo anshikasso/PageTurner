@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Edit Book{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>✏️ Edit Book</h1>
+        <a href="{{ url_for('books') }}" class="btn btn-outline">← Back to Books</a>
+    </div>
+</div>
+<div class="container form-page">
+    <form method="POST" enctype="multipart/form-data" class="styled-form">
+        <div class="form-section">
+            <h3>Book Details <small class="isbn-tag">ISBN: {{ book.ISBN }}</small></h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" name="title" value="{{ book.TITLE }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Edition</label>
+                    <input type="text" name="edition" value="{{ book.EDITION or '' }}">
+                </div>
+            </div>
+            <div class="form-row form-row-3">
+                <div class="form-group">
+                    <label>Price (₹) *</label>
+                    <input type="number" name="price" value="{{ book.PRICE }}" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Publication Year</label>
+                    <input type="number" name="pub_year" value="{{ book.PUBLICATION_YEAR or '' }}" min="1800" max="2099">
+                </div>
+                <div class="form-group">
+                    <label>Quantity Available</label>
+                    <input type="number" name="quantity" value="{{ book.QUANTITY_AVAILABLE }}" min="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Language</label>
+                <input type="text" name="language" value="{{ book.LANGUAGE or '' }}">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Author & Publisher</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Author</label>
+                    <select name="author_id">
+                        <option value="">-- None --</option>
+                        {% for a in authors %}
+                        <option value="{{ a.A_ID }}" {% if ids and ids.A_ID == a.A_ID %}selected{% endif %}>{{ a.NAME }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Publisher</label>
+                    <select name="publisher_id">
+                        <option value="">-- None --</option>
+                        {% for p in publishers %}
+                        <option value="{{ p.P_ID }}" {% if ids and ids.P_ID == p.P_ID %}selected{% endif %}>{{ p.NAME }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Book Cover</h3>
+            {% if book.IMAGE_PATH %}
+            <div class="current-image">
+                <p>Current cover:</p>
+                <img src="{{ url_for('static', filename='images/' + book.IMAGE_PATH) }}" alt="cover" style="max-height:150px; border-radius:8px;">
+            </div>
+            {% endif %}
+            <div class="form-group">
+                <label>Upload New Cover (optional)</label>
+                <input type="file" name="image" accept="image/*">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">Update Book</button>
+            <a href="{{ url_for('books') }}" class="btn btn-outline btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
